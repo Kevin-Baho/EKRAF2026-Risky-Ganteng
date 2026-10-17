@@ -337,7 +337,7 @@ function ProductsPage() {
 							) : table.getRowModel().rows.length > 0 ? (
 								table.getRowModel().rows.map((row) => (
 									<tr key={row.id} className="hover:bg-[var(--chip-bg)]/50 transition-colors">
-										{row.getVisibleCells().map((cell) => (
+										{row.getAllCells().map((cell) => (
 											<td key={cell.id} className="px-5 py-4">
 												{flexRender(cell.column.columnDef.cell, cell.getContext())}
 											</td>
