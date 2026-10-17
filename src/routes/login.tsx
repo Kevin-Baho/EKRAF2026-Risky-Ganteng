@@ -46,8 +46,13 @@ function LoginPage() {
 			});
 
 			if (res.error) {
+				const isInvalid =
+					res.error.message?.toLowerCase().includes("invalid email or password") ||
+					res.error.status === 401;
 				setErrorMessage(
-					res.error.message || "Gagal masuk. Periksa kembali email dan kata sandi Anda.",
+					isInvalid
+						? "Email atau kata sandi tidak cocok. Karena sistem menggunakan penyimpanan in-memory (tanpa database fisik), pastikan Anda sudah membuat akun di Halaman Setup terlebih dahulu."
+						: res.error.message || "Gagal masuk. Periksa kembali email dan kata sandi Anda.",
 				);
 				setLoading(false);
 				return;
@@ -106,7 +111,19 @@ function LoginPage() {
 								className="mb-5 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/40 p-3.5 text-xs text-red-800 dark:text-red-300 animate-in fade-in duration-200"
 							>
 								<AlertCircle className="size-4 shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
-								<div className="flex-1 font-medium leading-relaxed">{errorMessage}</div>
+								<div className="flex-1 font-medium leading-relaxed">
+									<p>{errorMessage}</p>
+									{errorMessage.includes("Halaman Setup") && (
+										<div className="mt-2">
+											<Link
+												to="/setup"
+												className="inline-flex items-center gap-1 font-bold underline underline-offset-4 hover:opacity-80"
+											>
+												Buka Halaman Setup &rarr;
+											</Link>
+										</div>
+									)}
+								</div>
 							</div>
 						)}
 
