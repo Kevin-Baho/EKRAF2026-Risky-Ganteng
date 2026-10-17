@@ -1,7 +1,16 @@
 import { seedAdmin } from "@/lib/server/auth";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, CheckCircle2, Database, Info, Loader2, Sparkles } from "lucide-react";
+import {
+	ArrowRight,
+	CheckCircle2,
+	Database,
+	Info,
+	Loader2,
+	ShieldCheck,
+	Sparkles,
+	Users,
+} from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/setup")({ component: Setup });
@@ -99,23 +108,62 @@ function Setup() {
 						</div>
 					)}
 
-					<div className="mt-8 rounded-2xl border border-[var(--chip-line)] bg-[var(--chip-bg)] p-4 sm:p-5">
-						<div className="flex items-start gap-3">
-							<Info className="size-4 text-primary shrink-0 mt-0.5" />
-							<div className="text-xs text-[var(--sea-ink-soft)] space-y-1">
-								<p className="font-semibold text-[var(--sea-ink)]">
-									Kredensial Akses Administrator:
-								</p>
-								<p>
-									Email:{" "}
-									<code className="font-mono font-semibold text-[var(--sea-ink)]">
-										admin@example.com
-									</code>
-								</p>
-								<p>
-									Kata Sandi:{" "}
-									<code className="font-mono font-semibold text-[var(--sea-ink)]">admin12345</code>
-								</p>
+					<div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+						{/* Admin Account */}
+						<div className="rounded-2xl border border-purple-200 dark:border-purple-900/60 bg-[var(--chip-bg)] p-4 sm:p-5">
+							<div className="flex items-start gap-3">
+								<ShieldCheck className="size-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+								<div className="text-xs text-[var(--sea-ink-soft)] space-y-1">
+									<div className="flex items-center gap-1.5 mb-1">
+										<p className="font-bold text-[var(--sea-ink)]">Akun Administrator</p>
+										<span className="text-[9px] bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-1.5 py-0.2 rounded font-semibold">
+											Penuh
+										</span>
+									</div>
+									<p>
+										Email:{" "}
+										<code className="font-mono font-semibold text-[var(--sea-ink)]">
+											admin@example.com
+										</code>
+									</p>
+									<p>
+										Kata Sandi:{" "}
+										<code className="font-mono font-semibold text-[var(--sea-ink)]">
+											admin12345
+										</code>
+									</p>
+									<p className="text-[11px] text-muted-foreground pt-1">
+										Izin: CRUD Produk penuh + Manajemen Pengguna & Hak Akses
+									</p>
+								</div>
+							</div>
+						</div>
+
+						{/* Standard User Account */}
+						<div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-[var(--chip-bg)] p-4 sm:p-5">
+							<div className="flex items-start gap-3">
+								<Users className="size-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+								<div className="text-xs text-[var(--sea-ink-soft)] space-y-1">
+									<div className="flex items-center gap-1.5 mb-1">
+										<p className="font-bold text-[var(--sea-ink)]">Akun Pengguna (User)</p>
+										<span className="text-[9px] bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-1.5 py-0.2 rounded font-semibold">
+											Terbatas
+										</span>
+									</div>
+									<p>
+										Email:{" "}
+										<code className="font-mono font-semibold text-[var(--sea-ink)]">
+											user@example.com
+										</code>
+									</p>
+									<p>
+										Kata Sandi:{" "}
+										<code className="font-mono font-semibold text-[var(--sea-ink)]">user12345</code>
+									</p>
+									<p className="text-[11px] text-muted-foreground pt-1">
+										Izin: Lihat Katalog & Detail Produk (Read-Only, tanpa akses pengguna)
+									</p>
+								</div>
 							</div>
 						</div>
 					</div>

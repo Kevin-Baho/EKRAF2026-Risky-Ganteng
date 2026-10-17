@@ -66,26 +66,36 @@ Saat pertama kali merefaktor struktur routing admin, saya memindahkan layout adm
 
 ---
 
-## 3. Petunjuk Pengujian Aplikasi
+## 3. Perbedaan Hak Akses: Administrator vs Pengguna (User)
+
+| Fitur / Halaman | Administrator (`admin@example.com`) | Pengguna Biasa (`user@example.com`) |
+|---|---|---|
+| **Dashboard (`/dashboard`)** | Menampilkan statistik penuh (Total Produk, Total Stok, Total Akun, Administrator Aktif) | Menampilkan statistik katalog produk & status izin read-only (tanpa data sensitif pengguna) |
+| **Manajemen Produk (`/products`)** | Akses penuh CRUD: Tombol Tambah Produk, Edit Produk, dan Hapus Produk aktif | Akses Katalog Terbatas: Tombol aksi digantikan dengan **"Lihat Detail"** (modal read-only), tidak ada tombol tambah/edit/hapus |
+| **Manajemen Pengguna (`/users`)** | Akses penuh: Daftar pengguna, ubah role (Admin/User), hapus pengguna | **Diblokir**: Menu disembunyikan dari sidebar, akses URL langsung di-redirect kembali ke dashboard, fungsi server menolak dengan HTTP 403 Forbidden |
+| **Mutasi Server (`create/update/delete`)** | Diizinkan via verifikasi `requireAdmin()` | Ditolak ketat di sisi server via verifikasi `requireAdmin()` |
+
+---
+
+## 4. Petunjuk Pengujian Aplikasi
 
 1. **Inisialisasi Data:**
    - Buka browser ke `http://localhost:3000/setup`.
    - Klik tombol **Inisialisasi Akun Admin & Produk**.
-   - Sistem akan membuat akun administrator (`admin@example.com` / `admin12345`) dan memuat produk sampel kriya/kuliner Ekraf.
-2. **Masuk ke Sistem:**
+   - Sistem akan membuat akun Administrator (`admin@example.com` / `admin12345`), akun Pengguna (`user@example.com` / `user12345`), dan 3 produk sampel kriya/kuliner Ekraf.
+2. **Pengujian Akun Administrator (Akses Penuh):**
    - Buka `http://localhost:3000/login`.
-   - Gunakan tombol **Isi Otomatis** atau ketikkan `admin@example.com` / `admin12345`.
-   - Klik **Masuk ke Dashboard**.
-3. **Manajemen Produk:**
-   - Buka menu **Produk Ekraf** (`/products`).
-   - Uji pengetikan pada modal **Tambah Produk Baru** (verifikasi input tidak freeze dan menerima ketikan).
-   - Unggah gambar file lokal (verifikasi resize otomatis ke resolusi maks 512px) atau masukkan URL gambar.
-   - Uji edit dan hapus produk.
-4. **Manajemen Pengguna & Hak Akses:**
-   - Buka menu **Pengguna & Hak Akses** (`/users`).
-   - Coba ubah role admin yang sedang login menjadi `user` (sistem akan menolak dengan proteksi self-demotion).
-   - Coba hapus admin terakhir (sistem akan menolak dengan proteksi last-admin lockout).
-5. **Verifikasi Kualitas:**
+   - Klik tombol pilihan cepat **Admin** (`admin@example.com`) lalu **Masuk ke Dashboard**.
+   - Verifikasi menu *Pengguna & Hak Akses* tampil di sidebar.
+   - Buka menu *Produk Ekraf*, coba tambah produk baru, edit, dan hapus.
+3. **Pengujian Akun Pengguna Biasa (Akses Terbatas):**
+   - Klik tombol **Keluar** pada sidebar.
+   - Masuk kembali dengan klik tombol pilihan cepat **User** (`user@example.com` / `user12345`).
+   - Perhatikan:
+     - Menu *Pengguna & Hak Akses* otomatis **tidak muncul** di sidebar.
+     - Coba ketik manual URL `http://localhost:3000/users` di address bar: sistem otomatis **menolak dan mengalihkan** kembali ke `/dashboard`.
+     - Pada menu *Produk Ekraf*, tombol *Tambah Produk Baru* tidak ada, dan kolom aksi hanya menyediakan tombol **"Lihat Detail"** (modal mode hanya-baca tanpa tombol simpan atau hapus).
+4. **Verifikasi Kualitas:**
    ```bash
    bun run lint    # Lulus tanpa error (Biome clean)
    bun run build   # Lulus kompilasi produksi

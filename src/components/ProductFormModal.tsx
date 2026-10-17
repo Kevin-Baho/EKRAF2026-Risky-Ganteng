@@ -28,12 +28,19 @@ interface ProductFormModalProps {
 	onClose: () => void;
 	product?: Product | null;
 	onSuccess: () => void;
+	readOnly?: boolean;
 }
 
 const MAX_IMAGE_SIZE_BYTES = 512 * 1024; // 512 KB
 const MAX_DIMENSION_PX = 512; // 512 px
 
-export function ProductFormModal({ open, onClose, product, onSuccess }: ProductFormModalProps) {
+export function ProductFormModal({
+	open,
+	onClose,
+	product,
+	onSuccess,
+	readOnly = false,
+}: ProductFormModalProps) {
 	const isEdit = !!product;
 	const createFn = useServerFn(createProduct);
 	const updateFn = useServerFn(updateProduct);
@@ -223,11 +230,19 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 		<Dialog open={open} onOpenChange={(next) => !next && onClose()}>
 			<DialogContent className="sm:max-w-[540px]">
 				<DialogHeader>
-					<DialogTitle>{isEdit ? "Edit Produk Ekraf" : "Tambah Produk Ekraf Baru"}</DialogTitle>
+					<DialogTitle>
+						{readOnly
+							? "Detail Produk Ekraf"
+							: isEdit
+								? "Edit Produk Ekraf"
+								: "Tambah Produk Ekraf Baru"}
+					</DialogTitle>
 					<DialogDescription>
-						{isEdit
-							? "Perbarui detail produk ekonomi kreatif di katalog dashboard."
-							: "Masukkan informasi lengkap produk ekonomi kreatif ke dalam sistem."}
+						{readOnly
+							? "Informasi detail produk ekonomi kreatif (Mode Lihat Saja)."
+							: isEdit
+								? "Perbarui detail produk ekonomi kreatif di katalog dashboard."
+								: "Masukkan informasi lengkap produk ekonomi kreatif ke dalam sistem."}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -241,7 +256,7 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 							onChange={(e) => setName(e.target.value)}
 							placeholder="Contoh: Kain Batik Tulis Solo Eksklusif"
 							required
-							disabled={submitting}
+							disabled={submitting || readOnly}
 						/>
 					</div>
 
@@ -254,7 +269,7 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 							placeholder="Deskripsikan keunikan, bahan, atau latar budaya produk..."
 							rows={3}
 							required
-							disabled={submitting}
+							disabled={submitting || readOnly}
 						/>
 					</div>
 
@@ -270,7 +285,7 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 								onChange={(e) => setPrice(e.target.value)}
 								placeholder="250000"
 								required
-								disabled={submitting}
+								disabled={submitting || readOnly}
 							/>
 						</div>
 						<div className="space-y-2">
@@ -284,7 +299,7 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 								onChange={(e) => setStock(e.target.value)}
 								placeholder="25"
 								required
-								disabled={submitting}
+								disabled={submitting || readOnly}
 							/>
 						</div>
 					</div>
@@ -296,64 +311,67 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 								<Image className="size-4" />
 								Foto Produk (Maks 512px / 512KB)
 							</Label>
-							<div className="flex gap-1 text-xs">
-								<button
-									type="button"
-									onClick={() => setImageMode("file")}
-									className={`px-2 py-0.5 rounded-md transition ${
-										imageMode === "file"
-											? "bg-[var(--sea-ink)] text-white font-medium"
-											: "text-[var(--sea-ink-soft)] hover:bg-[var(--line)]"
-									}`}
-								>
-									Upload File
-								</button>
-								<button
-									type="button"
-									onClick={() => setImageMode("url")}
-									className={`px-2 py-0.5 rounded-md transition ${
-										imageMode === "url"
-											? "bg-[var(--sea-ink)] text-white font-medium"
-											: "text-[var(--sea-ink-soft)] hover:bg-[var(--line)]"
-									}`}
-								>
-									URL Gambar
-								</button>
-							</div>
+							{!readOnly && (
+								<div className="flex gap-1 text-xs">
+									<button
+										type="button"
+										onClick={() => setImageMode("file")}
+										className={`px-2 py-0.5 rounded-md transition ${
+											imageMode === "file"
+												? "bg-[var(--sea-ink)] text-white font-medium"
+												: "text-[var(--sea-ink-soft)] hover:bg-[var(--line)]"
+										}`}
+									>
+										Upload File
+									</button>
+									<button
+										type="button"
+										onClick={() => setImageMode("url")}
+										className={`px-2 py-0.5 rounded-md transition ${
+											imageMode === "url"
+												? "bg-[var(--sea-ink)] text-white font-medium"
+												: "text-[var(--sea-ink-soft)] hover:bg-[var(--line)]"
+										}`}
+									>
+										URL Gambar
+									</button>
+								</div>
+							)}
 						</div>
 
-						{imageMode === "file" ? (
-							<div>
-								<Input
-									type="file"
-									accept="image/jpeg,image/png,image/webp"
-									onChange={handleFileSelect}
-									disabled={submitting}
-									className="cursor-pointer text-xs file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-[var(--line)] hover:file:bg-[var(--line)]/80"
-								/>
-								<p className="text-[11px] text-[var(--sea-ink-soft)] mt-1">
-									File akan otomatis di-resize ke maksimal 512x512px.
-								</p>
-							</div>
-						) : (
-							<div>
-								<Input
-									type="url"
-									value={imageUrl}
-									onChange={(e) => handleUrlChange(e.target.value)}
-									placeholder="https://example.com/foto-produk.jpg"
-									disabled={submitting}
-									className="text-xs"
-								/>
-								<p className="text-[11px] text-[var(--sea-ink-soft)] mt-1">
-									Mendukung URL https/http. File SVG tidak diperkenankan demi keamanan.
-								</p>
-							</div>
-						)}
+						{!readOnly &&
+							(imageMode === "file" ? (
+								<div>
+									<Input
+										type="file"
+										accept="image/jpeg,image/png,image/webp"
+										onChange={handleFileSelect}
+										disabled={submitting}
+										className="cursor-pointer text-xs file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-[var(--line)] hover:file:bg-[var(--line)]/80"
+									/>
+									<p className="text-[11px] text-[var(--sea-ink-soft)] mt-1">
+										File akan otomatis di-resize ke maksimal 512x512px.
+									</p>
+								</div>
+							) : (
+								<div>
+									<Input
+										type="url"
+										value={imageUrl}
+										onChange={(e) => handleUrlChange(e.target.value)}
+										placeholder="https://example.com/foto-produk.jpg"
+										disabled={submitting}
+										className="text-xs"
+									/>
+									<p className="text-[11px] text-[var(--sea-ink-soft)] mt-1">
+										Mendukung URL https/http. File SVG tidak diperkenankan demi keamanan.
+									</p>
+								</div>
+							))}
 
 						{imageError && <p className="text-xs text-red-600 font-medium">{imageError}</p>}
 
-						{imagePreview && (
+						{imagePreview ? (
 							<div className="mt-3 flex items-center gap-3 rounded-lg border border-[var(--line)] bg-[var(--chip-bg)] p-2">
 								<img
 									src={imagePreview}
@@ -362,26 +380,34 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 									onError={() => setImageError("Gagal memuat pratinjau gambar.")}
 								/>
 								<div className="flex-1 min-w-0 text-xs">
-									<p className="font-medium text-[var(--sea-ink)] truncate">Pratinjau Foto</p>
+									<p className="font-medium text-[var(--sea-ink)] truncate">
+										{name || "Foto Produk"}
+									</p>
 									<p className="text-[11px] text-[var(--sea-ink-soft)]">
-										Siap disimpan dalam katalog
+										{readOnly ? "Foto katalog tersimpan" : "Siap disimpan dalam katalog"}
 									</p>
 								</div>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon-xs"
-									onClick={() => {
-										setImageUrl("");
-										setImagePreview(null);
-										setImageError(null);
-									}}
-									title="Hapus foto"
-								>
-									<Trash2 className="size-4 text-red-500" />
-								</Button>
+								{!readOnly && (
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon-xs"
+										onClick={() => {
+											setImageUrl("");
+											setImagePreview(null);
+											setImageError(null);
+										}}
+										title="Hapus foto"
+									>
+										<Trash2 className="size-4 text-red-500" />
+									</Button>
+								)}
 							</div>
-						)}
+						) : readOnly ? (
+							<p className="text-xs text-muted-foreground italic py-1">
+								Tidak ada foto produk terlampir.
+							</p>
+						) : null}
 					</div>
 
 					{submitError && (
@@ -391,46 +417,54 @@ export function ProductFormModal({ open, onClose, product, onSuccess }: ProductF
 					)}
 
 					<DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
-						{isEdit && !confirmDelete && (
-							<Button
-								type="button"
-								variant="destructive"
-								onClick={() => setConfirmDelete(true)}
-								disabled={submitting}
-								className="sm:mr-auto"
-							>
-								Hapus
+						{readOnly ? (
+							<Button type="button" onClick={onClose} className="w-full sm:w-auto">
+								Tutup
 							</Button>
-						)}
-						{isEdit && confirmDelete && (
-							<div className="flex items-center gap-2 sm:mr-auto">
-								<Button
-									type="button"
-									variant="destructive"
-									size="sm"
-									onClick={handleDelete}
-									disabled={submitting}
-								>
-									{submitting ? "Menghapus..." : "Yakin Hapus?"}
-								</Button>
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={() => setConfirmDelete(false)}
-									disabled={submitting}
-								>
+						) : (
+							<>
+								{isEdit && !confirmDelete && (
+									<Button
+										type="button"
+										variant="destructive"
+										onClick={() => setConfirmDelete(true)}
+										disabled={submitting}
+										className="sm:mr-auto"
+									>
+										Hapus
+									</Button>
+								)}
+								{isEdit && confirmDelete && (
+									<div className="flex items-center gap-2 sm:mr-auto">
+										<Button
+											type="button"
+											variant="destructive"
+											size="sm"
+											onClick={handleDelete}
+											disabled={submitting}
+										>
+											{submitting ? "Menghapus..." : "Yakin Hapus?"}
+										</Button>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={() => setConfirmDelete(false)}
+											disabled={submitting}
+										>
+											Batal
+										</Button>
+									</div>
+								)}
+
+								<Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
 									Batal
 								</Button>
-							</div>
+								<Button type="submit" disabled={submitting}>
+									{submitting ? "Menyimpan..." : isEdit ? "Perbarui Produk" : "Tambah Produk"}
+								</Button>
+							</>
 						)}
-
-						<Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
-							Batal
-						</Button>
-						<Button type="submit" disabled={submitting}>
-							{submitting ? "Menyimpan..." : isEdit ? "Perbarui Produk" : "Tambah Produk"}
-						</Button>
 					</DialogFooter>
 				</form>
 			</DialogContent>

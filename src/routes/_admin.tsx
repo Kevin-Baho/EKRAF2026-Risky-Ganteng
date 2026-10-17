@@ -1,4 +1,4 @@
-import { authClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query";
 import { Link, Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import {
 	ChevronLeft,
@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 
 import ThemeToggle from "@/components/ThemeToggle";
+import { authClient } from "@/lib/auth-client";
 import { getServerSession } from "@/lib/server/auth";
 
 export const Route = createFileRoute("/_admin")({
@@ -25,20 +26,28 @@ export const Route = createFileRoute("/_admin")({
 	component: DashboardShell,
 });
 
-const NAV_ITEMS = [
-	{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-	{ href: "/products", label: "Produk Ekraf", icon: Package },
-	{ href: "/users", label: "Pengguna & Hak Akses", icon: Users },
-];
-
 function DashboardShell() {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [collapsed, setCollapsed] = useState(false);
 	const { data: session } = authClient.useSession();
 
+	const sessionQuery = useQuery({
+		queryKey: ["serverSession"],
+		queryFn: async () => getServerSession(),
+	});
+
 	const userEmail = session?.user?.email ?? "admin@example.com";
 	const userName = session?.user?.name ?? "Administrator";
 	const userInitial = (userName?.[0] || userEmail?.[0] || "A").toUpperCase();
+
+	const role = sessionQuery.data?.role ?? (userEmail === "admin@example.com" ? "admin" : "user");
+	const isAdmin = role === "admin";
+
+	const navItems = [
+		{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+		{ href: "/products", label: "Produk Ekraf", icon: Package },
+		...(isAdmin ? [{ href: "/users", label: "Pengguna & Hak Akses", icon: Users }] : []),
+	];
 
 	return (
 		<div className="flex h-screen overflow-hidden bg-[var(--background)]">
@@ -72,7 +81,7 @@ function DashboardShell() {
 						{!collapsed && (
 							<div className="flex flex-col">
 								<span className="text-sm font-bold tracking-tight text-[var(--sidebar-foreground)]">
-									Ekraf Admin
+									{isAdmin ? "Ekraf Admin" : "Ekraf Portal"}
 								</span>
 								<span className="text-[10px] text-muted-foreground uppercase font-medium tracking-wider">
 									Ekonomi Kreatif
@@ -94,7 +103,7 @@ function DashboardShell() {
 
 				{/* Nav Links */}
 				<nav className="flex-1 space-y-1.5 overflow-y-auto p-3">
-					{NAV_ITEMS.map((item) => {
+					{navItems.map((item) => {
 						const Icon = item.icon;
 						return (
 							<Link
@@ -124,9 +133,20 @@ function DashboardShell() {
 						</div>
 						{!collapsed && (
 							<div className="flex flex-col overflow-hidden">
-								<span className="text-xs font-semibold text-[var(--sidebar-foreground)] truncate">
-									{userName}
-								</span>
+								<div className="flex items-center gap-1.5">
+									<span className="text-xs font-semibold text-[var(--sidebar-foreground)] truncate">
+										{userName}
+									</span>
+									<span
+										className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${
+											isAdmin
+												? "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300"
+												: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+										}`}
+									>
+										{isAdmin ? "Admin" : "User"}
+									</span>
+								</div>
 								<span className="text-[11px] text-muted-foreground truncate">{userEmail}</span>
 							</div>
 						)}
@@ -139,7 +159,7 @@ function DashboardShell() {
 								window.location.href = "/login";
 							});
 						}}
-						className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 dark:hover:bg-red-950/40 ${
+						className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer ${
 							collapsed ? "justify-center" : ""
 						}`}
 						title="Keluar dari sistem"
@@ -171,6 +191,15 @@ function DashboardShell() {
 					</div>
 
 					<div className="flex items-center gap-3">
+						<span
+							className={`hidden sm:inline-flex text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+								isAdmin
+									? "bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+									: "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+							}`}
+						>
+							{isAdmin ? "Akses: Administrator" : "Akses: Pengguna Katalog"}
+						</span>
 						<ThemeToggle />
 						<div className="hidden sm:flex size-8 items-center justify-center rounded-full bg-[var(--chip-bg)] border border-[var(--chip-line)] text-xs font-bold text-[var(--sea-ink)] shadow-xs">
 							{userInitial}

@@ -1,7 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { auth } from "@/lib/auth";
-import { type Product, SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, db } from "@/lib/db";
+import {
+	type Product,
+	SEED_ADMIN_EMAIL,
+	SEED_ADMIN_PASSWORD,
+	SEED_USER_EMAIL,
+	SEED_USER_PASSWORD,
+	db,
+} from "@/lib/db";
 import { getCurrentSession } from "@/lib/session";
 
 /**
@@ -21,30 +28,47 @@ export const getServerSession = createServerFn({ method: "GET" }).handler(async 
  * Called from the client via `useServerFn(seedAdmin)` on the /setup page.
  */
 export const seedAdmin = createServerFn({ method: "POST" }).handler(async () => {
-	const hasAdmin = db.user.some((u) => {
-		const role = db.userRole.find((r) => r.userId === u.id)?.role;
-		return role === "admin";
-	});
-	if (hasAdmin) {
-		return { ok: true, alreadySeeded: true, admin: SEED_ADMIN_EMAIL };
+	const adminExists = db.user.find((u) => u.email === SEED_ADMIN_EMAIL);
+	if (!adminExists) {
+		await auth.api.signUpEmail({
+			body: {
+				email: SEED_ADMIN_EMAIL,
+				password: SEED_ADMIN_PASSWORD,
+				name: "Administrator",
+			},
+			headers: new Headers(),
+		});
+
+		const adminUser = db.user.find((u) => u.email === SEED_ADMIN_EMAIL);
+		if (adminUser) {
+			const existing = db.userRole.find((r) => r.userId === adminUser.id);
+			if (existing) {
+				existing.role = "admin";
+			} else {
+				db.userRole.push({ userId: adminUser.id, role: "admin" });
+			}
+		}
 	}
 
-	await auth.api.signUpEmail({
-		body: {
-			email: SEED_ADMIN_EMAIL,
-			password: SEED_ADMIN_PASSWORD,
-			name: "Administrator",
-		},
-		headers: new Headers(),
-	});
+	const userExists = db.user.find((u) => u.email === SEED_USER_EMAIL);
+	if (!userExists) {
+		await auth.api.signUpEmail({
+			body: {
+				email: SEED_USER_EMAIL,
+				password: SEED_USER_PASSWORD,
+				name: "Pengguna Ekraf (Katalog)",
+			},
+			headers: new Headers(),
+		});
 
-	const adminUser = db.user.find((u) => u.email === SEED_ADMIN_EMAIL);
-	if (adminUser) {
-		const existing = db.userRole.find((r) => r.userId === adminUser.id);
-		if (existing) {
-			existing.role = "admin";
-		} else {
-			db.userRole.push({ userId: adminUser.id, role: "admin" });
+		const normalUser = db.user.find((u) => u.email === SEED_USER_EMAIL);
+		if (normalUser) {
+			const existing = db.userRole.find((r) => r.userId === normalUser.id);
+			if (existing) {
+				existing.role = "user";
+			} else {
+				db.userRole.push({ userId: normalUser.id, role: "user" });
+			}
 		}
 	}
 
@@ -92,5 +116,10 @@ export const seedAdmin = createServerFn({ method: "POST" }).handler(async () => 
 		db.product.push(...sampleProducts);
 	}
 
-	return { ok: true, alreadySeeded: false, admin: SEED_ADMIN_EMAIL };
+	return {
+		ok: true,
+		alreadySeeded: Boolean(adminExists && userExists),
+		admin: SEED_ADMIN_EMAIL,
+		user: SEED_USER_EMAIL,
+	};
 });

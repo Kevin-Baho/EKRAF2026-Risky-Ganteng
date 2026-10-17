@@ -15,9 +15,12 @@ export async function getCurrentSession() {
 	const result = await auth.api.getSession({
 		headers: request.headers,
 	});
+	const user = result?.user ?? null;
+	const role: Role = user ? getUserRole(user.id) : "user";
 	return {
 		session: result?.session ?? null,
-		user: result?.user ?? null,
+		user,
+		role,
 	};
 }
 

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
-import { ArrowRight, Package, ShieldCheck, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, Eye, Lock, Package, ShieldCheck, TrendingUp, Users } from "lucide-react";
 
 import { getServerSession } from "@/lib/server/auth";
 import { getProducts } from "@/lib/server/products";
@@ -17,6 +17,14 @@ export const Route = createFileRoute("/_admin/dashboard")({
 });
 
 function Dashboard() {
+	const sessionQuery = useQuery({
+		queryKey: ["serverSession"],
+		queryFn: async () => getServerSession(),
+	});
+
+	const role = sessionQuery.data?.role ?? "user";
+	const isAdmin = role === "admin";
+
 	const productsQuery = useQuery({
 		queryKey: ["products"],
 		queryFn: async () => getProducts(),
@@ -25,12 +33,13 @@ function Dashboard() {
 	const usersQuery = useQuery({
 		queryKey: ["users"],
 		queryFn: async () => getUsers(),
+		enabled: isAdmin,
 	});
 
 	const products = productsQuery.data ?? [];
 	const users = usersQuery.data ?? [];
 
-	// Compute statistics strictly from real database items (NO fake statistics)
+	// Real-Data Metrics
 	const totalProducts = products.length;
 	const totalStock = products.reduce((acc, p) => acc + (p.stock || 0), 0);
 	const totalUsers = users.length;
@@ -43,25 +52,49 @@ function Dashboard() {
 			{/* Page Header */}
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 				<div>
-					<p className="island-kicker mb-1">Ikhtisar Ekraf</p>
+					<div className="flex items-center gap-2 mb-1">
+						<span className="island-kicker">Ikhtisar Ekraf</span>
+						<span
+							className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+								isAdmin
+									? "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300"
+									: "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+							}`}
+						>
+							{isAdmin ? "Mode Administrator" : "Mode Pengguna Terbatas"}
+						</span>
+					</div>
 					<h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--sea-ink)]">
-						Ringkasan Manajemen
+						{isAdmin ? "Ringkasan Manajemen" : "Katalog Produk & Dashboard"}
 					</h1>
 					<p className="text-sm text-[var(--sea-ink-soft)] mt-1">
-						Pantau inventaris produk ekonomi kreatif dan administrasi akun pengguna secara
-						real-time.
+						{isAdmin
+							? "Pantau inventaris produk ekonomi kreatif dan administrasi akun pengguna secara real-time."
+							: "Eksplorasi koleksi produk karya ekonomi kreatif nusantara dan informasi ketersediaan stok."}
 					</p>
 				</div>
 				<div className="flex items-center gap-3">
 					<Link
 						to="/products"
-						className="inline-flex items-center gap-2 rounded-xl bg-[var(--sea-ink)] text-white px-4 py-2.5 text-sm font-semibold shadow-xs hover:bg-[#0f282c] transition"
+						className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground px-4 py-2.5 text-sm font-semibold shadow-xs hover:opacity-90 transition"
 					>
 						<Package className="size-4" />
-						Kelola Produk
+						<span>{isAdmin ? "Kelola Produk" : "Buka Katalog"}</span>
 					</Link>
 				</div>
 			</div>
+
+			{/* User info banner when not admin */}
+			{!isAdmin && (
+				<div className="rounded-2xl border border-blue-200 bg-blue-50/70 dark:border-blue-900/40 dark:bg-blue-950/30 p-4 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-3">
+					<Eye className="size-4 shrink-0 mt-0.5 text-blue-600 dark:text-blue-400" />
+					<div className="leading-relaxed">
+						<strong>Akses Pengguna Terbatas (Read-Only):</strong> Anda masuk dengan akun Pengguna.
+						Anda dapat menelusuri katalog produk, melihat harga dan detail stok. Hak penambahan,
+						pengubahan, penghapusan produk, serta manajemen akun dikhususkan bagi Administrator.
+					</div>
+				</div>
+			)}
 
 			{/* Real-Data Metrics Cards */}
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -79,20 +112,42 @@ function Dashboard() {
 					icon={TrendingUp}
 					color="text-teal-600 bg-teal-50 dark:bg-teal-950/40 dark:text-teal-400"
 				/>
-				<MetricCard
-					title="Total Akun Pengguna"
-					value={totalUsers}
-					subtitle="Pengguna terdaftar"
-					icon={Users}
-					color="text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400"
-				/>
-				<MetricCard
-					title="Administrator Aktif"
-					value={adminCount}
-					subtitle="Akses kontrol penuh"
-					icon={ShieldCheck}
-					color="text-purple-600 bg-purple-50 dark:bg-purple-950/40 dark:text-purple-400"
-				/>
+
+				{isAdmin ? (
+					<>
+						<MetricCard
+							title="Total Akun Pengguna"
+							value={totalUsers}
+							subtitle="Pengguna terdaftar"
+							icon={Users}
+							color="text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400"
+						/>
+						<MetricCard
+							title="Administrator Aktif"
+							value={adminCount}
+							subtitle="Akses kontrol penuh"
+							icon={ShieldCheck}
+							color="text-purple-600 bg-purple-50 dark:bg-purple-950/40 dark:text-purple-400"
+						/>
+					</>
+				) : (
+					<>
+						<MetricCard
+							title="Status Akun Anda"
+							value="Pengguna"
+							subtitle="Terverifikasi"
+							icon={Users}
+							color="text-blue-600 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400"
+						/>
+						<MetricCard
+							title="Izin Operasi"
+							value="Read-Only"
+							subtitle="Lihat katalog & detail"
+							icon={Lock}
+							color="text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400"
+						/>
+					</>
+				)}
 			</div>
 
 			{/* Recent Products Table Section */}
@@ -140,13 +195,13 @@ function Dashboard() {
 											)}
 											<div>
 												<p className="font-semibold text-[var(--sea-ink)]">{p.name}</p>
-												<p className="text-xs text-[var(--sea-ink-soft)] line-clamp-1">
+												<p className="text-xs text-[var(--sea-ink-soft)] line-clamp-1 max-w-xs">
 													{p.description}
 												</p>
 											</div>
 										</div>
 									</td>
-									<td className="px-4 py-3 font-medium text-[var(--sea-ink)]">
+									<td className="px-4 py-3 font-semibold text-[var(--sea-ink)]">
 										Rp{p.price.toLocaleString("id-ID")}
 									</td>
 									<td className="px-4 py-3">
@@ -171,25 +226,10 @@ function Dashboard() {
 									</td>
 								</tr>
 							))}
-
 							{recentProducts.length === 0 && (
 								<tr>
-									<td
-										colSpan={4}
-										className="px-4 py-8 text-center text-sm text-[var(--sea-ink-soft)]"
-									>
-										Belum ada produk yang ditambahkan. Kunjungi halaman{" "}
-										<Link
-											to="/products"
-											className="text-[var(--lagoon-deep)] underline font-medium"
-										>
-											Produk
-										</Link>{" "}
-										atau jalankan{" "}
-										<Link to="/setup" className="text-[var(--lagoon-deep)] underline font-medium">
-											/setup
-										</Link>{" "}
-										untuk memuat produk sampel.
+									<td colSpan={4} className="px-4 py-8 text-center text-xs text-muted-foreground">
+										Belum ada produk yang didaftarkan.
 									</td>
 								</tr>
 							)}
@@ -215,18 +255,20 @@ function MetricCard({
 	color: string;
 }) {
 	return (
-		<div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] p-5 shadow-xs transition hover:shadow-md">
+		<div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] p-5 shadow-xs backdrop-blur-xs">
 			<div className="flex items-center justify-between">
-				<span className="text-xs font-medium text-[var(--sea-ink-soft)]">{title}</span>
-				<div className={`p-2 rounded-xl ${color}`}>
-					<Icon className="size-4" />
+				<span className="text-xs font-semibold text-[var(--sea-ink-soft)] uppercase tracking-wider">
+					{title}
+				</span>
+				<div className={`flex size-9 items-center justify-center rounded-xl ${color}`}>
+					<Icon className="size-5" />
 				</div>
 			</div>
 			<div className="mt-3">
-				<p className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--sea-ink)]">
+				<span className="text-2xl font-extrabold text-[var(--sea-ink)] tracking-tight">
 					{value}
-				</p>
-				<p className="text-xs text-[var(--sea-ink-soft)] mt-0.5">{subtitle}</p>
+				</span>
+				<p className="mt-1 text-xs text-[var(--sea-ink-soft)]">{subtitle}</p>
 			</div>
 		</div>
 	);

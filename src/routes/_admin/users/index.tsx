@@ -22,9 +22,12 @@ type UserRow = {
 
 export const Route = createFileRoute("/_admin/users/")({
 	beforeLoad: async () => {
-		const { session } = await getServerSession();
+		const { session, role } = await getServerSession();
 		if (!session) {
 			return redirect({ to: "/login" }) as any;
+		}
+		if (role !== "admin") {
+			return redirect({ to: "/dashboard" }) as any;
 		}
 	},
 	component: UsersPage,

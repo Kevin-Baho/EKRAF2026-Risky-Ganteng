@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import {
 	type SortingState,
 	createColumnHelper,
@@ -8,7 +9,7 @@ import {
 	tableFeatures,
 	useTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, Edit, Package, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowUpDown, Edit, Eye, Package, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { ProductFormModal } from "@/components/ProductFormModal";
@@ -17,7 +18,6 @@ import { Input } from "@/components/ui/input";
 import type { Product } from "@/lib/db";
 import { getServerSession } from "@/lib/server/auth";
 import { deleteProduct, getProducts } from "@/lib/server/products";
-import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_admin/products/")({
 	beforeLoad: async () => {
@@ -37,6 +37,14 @@ function ProductsPage() {
 	const [modalOpen, setModalOpen] = useState(false);
 	const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 	const [sorting, setSorting] = useState<SortingState>([]);
+
+	const sessionQuery = useQuery({
+		queryKey: ["serverSession"],
+		queryFn: async () => getServerSession(),
+	});
+
+	const role = sessionQuery.data?.role ?? "user";
+	const isAdmin = role === "admin";
 
 	const productsQuery = useQuery({
 		queryKey: ["products"],
@@ -64,7 +72,7 @@ function ProductsPage() {
 					<button
 						type="button"
 						onClick={column.getToggleSortingHandler()}
-						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)]"
+						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)] cursor-pointer"
 					>
 						Produk
 						<ArrowUpDown className="size-3" />
@@ -102,7 +110,7 @@ function ProductsPage() {
 					<button
 						type="button"
 						onClick={column.getToggleSortingHandler()}
-						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)]"
+						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)] cursor-pointer"
 					>
 						Harga
 						<ArrowUpDown className="size-3" />
@@ -119,7 +127,7 @@ function ProductsPage() {
 					<button
 						type="button"
 						onClick={column.getToggleSortingHandler()}
-						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)]"
+						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)] cursor-pointer"
 					>
 						Stok
 						<ArrowUpDown className="size-3" />
@@ -147,7 +155,7 @@ function ProductsPage() {
 					<button
 						type="button"
 						onClick={column.getToggleSortingHandler()}
-						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)]"
+						className="flex items-center gap-1 font-semibold text-xs tracking-wider uppercase text-[var(--sea-ink-soft)] cursor-pointer"
 					>
 						Terdaftar
 						<ArrowUpDown className="size-3" />
@@ -172,6 +180,23 @@ function ProductsPage() {
 				),
 				cell: (info) => {
 					const product = info.row.original as Product;
+					if (!isAdmin) {
+						return (
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() => {
+									setEditingProduct(product);
+									setModalOpen(true);
+								}}
+								className="h-8 px-2.5 text-xs text-[var(--sea-ink)] hover:bg-[var(--chip-bg)] cursor-pointer"
+							>
+								<Eye className="size-3.5 mr-1 text-primary" />
+								Lihat Detail
+							</Button>
+						);
+					}
 					return (
 						<div className="flex items-center gap-2">
 							<Button
@@ -182,7 +207,7 @@ function ProductsPage() {
 									setEditingProduct(product);
 									setModalOpen(true);
 								}}
-								className="h-8 px-2 text-xs text-[var(--sea-ink)] hover:bg-[var(--chip-bg)]"
+								className="h-8 px-2 text-xs text-[var(--sea-ink)] hover:bg-[var(--chip-bg)] cursor-pointer"
 							>
 								<Edit className="size-3.5 mr-1" />
 								Edit
@@ -201,7 +226,7 @@ function ProductsPage() {
 										}
 									}
 								}}
-								className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+								className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
 							>
 								<Trash2 className="size-3.5 mr-1" />
 								Hapus
@@ -211,7 +236,7 @@ function ProductsPage() {
 				},
 			}),
 		],
-		[columnHelper, deleteFn, queryClient],
+		[columnHelper, deleteFn, queryClient, isAdmin],
 	);
 
 	const table = useTable({
@@ -231,45 +256,52 @@ function ProductsPage() {
 				<div>
 					<p className="island-kicker mb-1">Katalog Produk</p>
 					<h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-[var(--sea-ink)]">
-						Manajemen Produk Ekraf
+						{isAdmin ? "Manajemen Produk Ekraf" : "Katalog Produk Ekraf"}
 					</h1>
 					<p className="text-sm text-[var(--sea-ink-soft)] mt-1">
-						Kelola data komoditas kreatif, harga, jumlah stok, dan foto representatif.
+						{isAdmin
+							? "Kelola data komoditas kreatif, harga, jumlah stok, dan foto representatif."
+							: "Jelajahi karya kreatif nusantara beserta informasi harga dan ketersediaan stok."}
 					</p>
 				</div>
-				<Button
-					type="button"
-					onClick={() => {
-						setEditingProduct(null);
-						setModalOpen(true);
-					}}
-					className="bg-[var(--sea-ink)] text-white hover:bg-[#0f282c] shadow-xs"
-				>
-					<Plus className="size-4 mr-2" />
-					Tambah Produk Baru
-				</Button>
+				{isAdmin ? (
+					<Button
+						type="button"
+						onClick={() => {
+							setEditingProduct(null);
+							setModalOpen(true);
+						}}
+						className="bg-[var(--sea-ink)] text-white hover:bg-[#0f282c] shadow-xs cursor-pointer"
+					>
+						<Plus className="size-4 mr-2" />
+						Tambah Produk Baru
+					</Button>
+				) : (
+					<span className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50/80 dark:border-blue-900/50 dark:bg-blue-950/40 px-3.5 py-2 text-xs font-semibold text-blue-700 dark:text-blue-300 shadow-xs">
+						<Eye className="size-3.5" />
+						Mode Katalog (Hanya Baca)
+					</span>
+				)}
 			</div>
 
 			{/* Filter & Search Bar */}
 			<div className="flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] p-3 shadow-xs">
 				<Search className="size-4 text-[var(--sea-ink-soft)] ml-2" />
 				<Input
-					type="search"
-					placeholder="Cari berdasarkan nama atau deskripsi produk..."
+					type="text"
+					placeholder="Cari nama produk atau deskripsi ekonomi kreatif..."
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
-					className="border-none shadow-none focus-visible:ring-0 bg-transparent text-sm"
+					className="border-none bg-transparent shadow-none focus-visible:ring-0 text-sm placeholder:text-muted-foreground"
 				/>
 				{searchQuery && (
-					<Button
+					<button
 						type="button"
-						variant="ghost"
-						size="sm"
 						onClick={() => setSearchQuery("")}
-						className="text-xs h-7 px-2"
+						className="text-xs text-[var(--sea-ink-soft)] hover:text-[var(--sea-ink)] px-2 py-1 rounded-md cursor-pointer"
 					>
-						Reset
-					</Button>
+						Hapus filter
+					</button>
 				)}
 			</div>
 
@@ -277,11 +309,11 @@ function ProductsPage() {
 			<div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] shadow-xs overflow-hidden backdrop-blur-xs">
 				<div className="overflow-x-auto">
 					<table className="w-full text-sm text-left border-collapse">
-						<thead className="bg-[var(--chip-bg)] border-b border-[var(--line)]">
+						<thead className="bg-[var(--chip-bg)] text-xs text-[var(--sea-ink-soft)] uppercase font-semibold border-b border-[var(--line)]">
 							{table.getHeaderGroups().map((headerGroup) => (
 								<tr key={headerGroup.id}>
 									{headerGroup.headers.map((header) => (
-										<th key={header.id} className="px-4 py-3.5">
+										<th key={header.id} className="px-5 py-3.5">
 											{header.isPlaceholder
 												? null
 												: flexRender(header.column.columnDef.header, header.getContext())}
@@ -291,40 +323,44 @@ function ProductsPage() {
 							))}
 						</thead>
 						<tbody className="divide-y divide-[var(--line)] bg-[var(--surface)]">
-							{table.getRowModel().rows.map((row) => (
-								<tr key={row.id} className="hover:bg-[var(--chip-bg)]/50 transition-colors">
-									{row.getAllCells().map((cell) => (
-										<td key={cell.id} className="px-4 py-3.5">
-											{flexRender(cell.column.columnDef.cell, cell.getContext())}
-										</td>
-									))}
+							{productsQuery.isLoading ? (
+								<tr>
+									<td colSpan={columns.length} className="px-5 py-12 text-center">
+										<div className="flex flex-col items-center justify-center gap-2">
+											<div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+											<span className="text-xs text-[var(--sea-ink-soft)]">
+												Memuat data produk...
+											</span>
+										</div>
+									</td>
 								</tr>
-							))}
-
-							{table.getRowModel().rows.length === 0 && (
+							) : table.getRowModel().rows.length > 0 ? (
+								table.getRowModel().rows.map((row) => (
+									<tr key={row.id} className="hover:bg-[var(--chip-bg)]/50 transition-colors">
+										{row.getVisibleCells().map((cell) => (
+											<td key={cell.id} className="px-5 py-4">
+												{flexRender(cell.column.columnDef.cell, cell.getContext())}
+											</td>
+										))}
+									</tr>
+								))
+							) : (
 								<tr>
 									<td
 										colSpan={columns.length}
-										className="px-4 py-12 text-center text-[var(--sea-ink-soft)]"
+										className="px-5 py-12 text-center text-xs text-[var(--sea-ink-soft)]"
 									>
-										{searchQuery ? (
-											<p>Tidak ada produk yang sesuai dengan kata kunci pencarian.</p>
-										) : (
-											<div className="space-y-3">
-												<p>Belum ada produk yang terdaftar dalam inventaris.</p>
-												<Button
-													type="button"
-													size="sm"
-													onClick={() => {
-														setEditingProduct(null);
-														setModalOpen(true);
-													}}
-												>
-													<Plus className="size-4 mr-1" />
-													Tambah Produk Pertama
-												</Button>
-											</div>
-										)}
+										<div className="flex flex-col items-center justify-center gap-2">
+											<Package className="size-8 text-muted-foreground opacity-40" />
+											<p className="font-medium text-sm text-[var(--sea-ink)]">
+												Tidak ada produk ditemukan
+											</p>
+											<p className="text-xs max-w-sm text-muted-foreground">
+												{searchQuery
+													? "Tidak ada produk yang cocok dengan pencarian Anda."
+													: "Belum ada produk yang tersimpan dalam sistem."}
+											</p>
+										</div>
 									</td>
 								</tr>
 							)}
@@ -333,7 +369,7 @@ function ProductsPage() {
 				</div>
 			</div>
 
-			{/* Form Modal for Create & Edit */}
+			{/* Form Modal for Create, Edit, or ReadOnly Detail */}
 			<ProductFormModal
 				open={modalOpen}
 				onClose={() => {
@@ -341,6 +377,7 @@ function ProductsPage() {
 					setEditingProduct(null);
 				}}
 				product={editingProduct}
+				readOnly={!isAdmin}
 				onSuccess={() => {
 					void queryClient.invalidateQueries({ queryKey: ["products"] });
 				}}

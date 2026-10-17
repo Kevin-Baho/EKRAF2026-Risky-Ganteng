@@ -72,6 +72,12 @@ function LoginPage() {
 		setErrorMessage(null);
 	};
 
+	const fillUserCredentials = () => {
+		setEmail("user@example.com");
+		setPassword("user12345");
+		setErrorMessage(null);
+	};
+
 	return (
 		<div className="min-h-screen flex flex-col justify-between bg-[var(--bg-base)] text-[var(--sea-ink)] px-4 py-8 sm:px-6">
 			{/* Top Bar with brand and theme toggle */}
@@ -214,26 +220,52 @@ function LoginPage() {
 
 						{/* Demo quick fill helper */}
 						<div className="mt-6 pt-5 border-t border-[var(--line)]">
-							<div className="rounded-xl border border-[var(--chip-line)] bg-[var(--chip-bg)] p-3 text-center">
-								<p className="text-xs font-medium text-[var(--sea-ink-soft)]">
-									Akun Administrator Default:
+							<div className="rounded-xl border border-[var(--chip-line)] bg-[var(--chip-bg)] p-3 text-center space-y-2.5">
+								<p className="text-xs font-semibold text-[var(--sea-ink)]">
+									Pilihan Cepat Masuk Akun Uji Coba:
 								</p>
-								<p className="mt-1 font-mono text-[11px] text-[var(--sea-ink)]">
-									admin@example.com • admin12345
-								</p>
-								<div className="mt-2.5 flex items-center justify-center gap-2">
+								<div className="grid grid-cols-2 gap-2 text-left">
 									<button
 										type="button"
 										onClick={fillAdminCredentials}
-										className="inline-flex items-center gap-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-xs font-semibold text-[var(--sea-ink)] hover:bg-[var(--link-bg-hover)] transition cursor-pointer"
+										className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-2 hover:bg-[var(--link-bg-hover)] transition cursor-pointer"
 									>
-										Isi Otomatis
+										<div className="flex items-center justify-between">
+											<span className="text-[11px] font-bold text-purple-700 dark:text-purple-300">
+												Admin
+											</span>
+											<span className="text-[9px] bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 px-1 py-0.2 rounded font-mono font-medium">
+												Penuh
+											</span>
+										</div>
+										<p className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate">
+											admin@example.com
+										</p>
 									</button>
+									<button
+										type="button"
+										onClick={fillUserCredentials}
+										className="rounded-lg border border-[var(--line)] bg-[var(--surface)] p-2 hover:bg-[var(--link-bg-hover)] transition cursor-pointer"
+									>
+										<div className="flex items-center justify-between">
+											<span className="text-[11px] font-bold text-blue-700 dark:text-blue-300">
+												User
+											</span>
+											<span className="text-[9px] bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 px-1 py-0.2 rounded font-mono font-medium">
+												Terbatas
+											</span>
+										</div>
+										<p className="text-[10px] text-muted-foreground font-mono mt-0.5 truncate">
+											user@example.com
+										</p>
+									</button>
+								</div>
+								<div>
 									<Link
 										to="/setup"
-										className="inline-flex items-center gap-1 rounded-lg border border-transparent px-2.5 py-1 text-xs font-medium text-primary hover:underline transition"
+										className="text-[11px] font-medium text-primary hover:underline"
 									>
-										Halaman Setup
+										Belum inisialisasi? Buka Halaman Setup &rarr;
 									</Link>
 								</div>
 							</div>
